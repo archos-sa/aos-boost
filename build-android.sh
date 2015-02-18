@@ -27,6 +27,13 @@
 # Command line arguments
 # -----------------------
 
+ARCH=arm
+#register_option "--arch=<arch>" arch "Select which architecture to build to, one of {armeabi-v7a, armeabi, x86, mips, arm64-v8, x86_64, mips64}."
+register_option "--arch=<arch>" arch_set "Select which architecture to build to, one of {armeabi-v7a, x86}."
+arch_set() {
+	ARCH="$1"
+}
+
 BOOST_VER1=1
 BOOST_VER2=53
 BOOST_VER3=0
@@ -118,7 +125,7 @@ echo "Building boost version: $BOOST_VER1.$BOOST_VER2.$BOOST_VER3"
 BOOST_DOWNLOAD_LINK="http://downloads.sourceforge.net/project/boost/boost/$BOOST_VER1.$BOOST_VER2.$BOOST_VER3/boost_${BOOST_VER1}_${BOOST_VER2}_${BOOST_VER3}.tar.bz2?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F${BOOST_VER1}.${BOOST_VER2}.${BOOST_VER3}%2F&ts=1291326673&use_mirror=garr"
 BOOST_TAR="boost_${BOOST_VER1}_${BOOST_VER2}_${BOOST_VER3}.tar.bz2"
 BOOST_DIR="boost_${BOOST_VER1}_${BOOST_VER2}_${BOOST_VER3}"
-BUILD_DIR="./build/"
+BUILD_DIR="./build-${ARCH}/"
 
 # -----------------------
 
@@ -221,46 +228,64 @@ case "$NDK_RN" in
 		TOOLCHAIN=${TOOLCHAIN:-arm-eabi-4.4.0}
 		CXXPATH=$AndroidNDKRoot/build/prebuilt/$PlatformOS-x86/${TOOLCHAIN}/bin/arm-eabi-g++
 		TOOLSET=gcc-androidR4
+		HOST=x86
+		GCC_VERSION=4.4.0
 		;;
 	5*)
 		TOOLCHAIN=${TOOLCHAIN:-arm-linux-androideabi-4.4.3}
 		CXXPATH=$AndroidNDKRoot/toolchains/${TOOLCHAIN}/prebuilt/$PlatformOS-x86/bin/arm-linux-androideabi-g++
 		TOOLSET=gcc-androidR5
+		HOST=x86
+		GCC_VERSION=4.4.3
 		;;
 	7-crystax-5.beta3)
 		TOOLCHAIN=${TOOLCHAIN:-arm-linux-androideabi-4.6.3}
 		CXXPATH=$AndroidNDKRoot/toolchains/${TOOLCHAIN}/prebuilt/$PlatformOS-x86/bin/arm-linux-androideabi-g++
 		TOOLSET=gcc-androidR7crystax5beta3
+		HOST=x86
+		GCC_VERSION=4.6.3
 		;;
 	8)
 		TOOLCHAIN=${TOOLCHAIN:-arm-linux-androideabi-4.4.3}
 		CXXPATH=$AndroidNDKRoot/toolchains/${TOOLCHAIN}/prebuilt/$PlatformOS-x86/bin/arm-linux-androideabi-g++
 		TOOLSET=gcc-androidR8
+		HOST=x86
+		GCC_VERSION=4.4.3
 		;;
 	8b|8c|8d)
 		TOOLCHAIN=${TOOLCHAIN:-arm-linux-androideabi-4.6}
 		CXXPATH=$AndroidNDKRoot/toolchains/${TOOLCHAIN}/prebuilt/$PlatformOS-x86/bin/arm-linux-androideabi-g++
 		TOOLSET=gcc-androidR8b
+		HOST=x86
+		GCC_VERSION=4.6
 		;;
 	8e|9|9b|9c|9d)
 		TOOLCHAIN=${TOOLCHAIN:-arm-linux-androideabi-4.6}
 		CXXPATH=$AndroidNDKRoot/toolchains/${TOOLCHAIN}/prebuilt/$PlatformOS-x86/bin/arm-linux-androideabi-g++
 		TOOLSET=gcc-androidR8e
+		HOST=x86
+		GCC_VERSION=4.6
 		;;
 	"8e (64-bit)")
 		TOOLCHAIN=${TOOLCHAIN:-arm-linux-androideabi-4.6}
 		CXXPATH=$AndroidNDKRoot/toolchains/${TOOLCHAIN}/prebuilt/${PlatformOS}-x86_64/bin/arm-linux-androideabi-g++
 		TOOLSET=gcc-androidR8e
+		HOST=x86_64
+		GCC_VERSION=4.6
 		;;
 	"9 (64-bit)"|"9b (64-bit)"|"9c (64-bit)"|"9d (64-bit)")
 		TOOLCHAIN=${TOOLCHAIN:-arm-linux-androideabi-4.6}
 		CXXPATH=$AndroidNDKRoot/toolchains/${TOOLCHAIN}/prebuilt/${PlatformOS}-x86_64/bin/arm-linux-androideabi-g++
 		TOOLSET=gcc-androidR8e
+		HOST=x86_64
+		GCC_VERSION=4.6
 		;;
 	"10 (64-bit)"|"10b (64-bit)"|"10c (64-bit)"|"10d (64-bit)")
 		TOOLCHAIN=${TOOLCHAIN:-arm-linux-androideabi-4.6}
 		CXXPATH=$AndroidNDKRoot/toolchains/${TOOLCHAIN}/prebuilt/${PlatformOS}-x86_64/bin/arm-linux-androideabi-g++
 		TOOLSET=gcc-androidR8e
+		HOST=x86_64
+		GCC_VERSION=4.6
 		;;
 	*)
 		echo "Undefined or not supported Android NDK version!"
@@ -345,7 +370,7 @@ then
   BOOST_VER=${BOOST_VER1}_${BOOST_VER2}_${BOOST_VER3}
   PATCH_BOOST_DIR=$PROGDIR/patches/boost-${BOOST_VER}
 
-  cp configs/user-config-boost-${BOOST_VER}.jam $BOOST_DIR/tools/build/v2/user-config.jam
+  cp configs/user-config-boost-${BOOST_VER}-${ARCH}.jam $BOOST_DIR/tools/build/v2/user-config.jam
 
   for dir in $PATCH_BOOST_DIR; do
     if [ ! -d "$dir" ]; then
@@ -399,9 +424,12 @@ echo "Building boost for android"
 
   cd $BOOST_DIR
 
-  echo "Adding pathname: `dirname $CXXPATH`"
-  # `AndroidBinariesPath` could be used by user-config-boost-*.jam
-  export AndroidBinariesPath=`dirname $CXXPATH`
+  AndroidBinariesPath=""
+  for i in aarch64-linux-android arm-linux-androideabi x86 mipsel-linux-android mips64el-linux-android;do
+	AndroidBinariesPath=$AndroidBinariesPath:$AndroidNDKRoot/toolchains/"$i-$GCC_VERSION"/prebuilt/${PlatformOS}-"${HOST}/bin/"
+  done
+  echo "Adding pathname: $AndroidBinariesPath"
+  export AndroidBinariesPath
   export PATH=$AndroidBinariesPath:$PATH
   export AndroidNDKRoot
   export NO_BZIP2=1
