@@ -123,3 +123,14 @@ diff -u -r boost_1_55_0/libs/filesystem/src/operations.cpp boost_1_55_0.patched/
  
  #   define BOOST_ERROR_NOT_SUPPORTED ENOSYS
  #   define BOOST_ERROR_ALREADY_EXISTS EEXIST
+diff -ur boost_1_55_0/boost/thread/pthread/thread_data.hpp boost_1_55_0.phh/boost/thread/pthread/thread_data.hpp
+--- boost_1_55_0/boost/thread/pthread/thread_data.hpp   2013-08-03 18:04:39.000000000 +0200
++++ boost_1_55_0.patched/boost/thread/pthread/thread_data.hpp       2015-02-19 15:21:17.850343923 +0100
+@@ -25,7 +25,7 @@
+ #include <vector>
+ #include <utility>
+ 
+-#if defined(__ANDROID__)
++#if defined(__ANDROID__) && !defined(PAGE_SIZE)
+ #include <asm/page.h> // http://code.google.com/p/android/issues/detail?id=39983
+ #endif
