@@ -1,3 +1,9 @@
+### Boost
+
+boost as used by [AVP](https://github.com/archos-sa/aos-AVP).
+Please see upstream project: https://github.com/moritz-wundke/Boost-for-Android
+
+
 # Boost for Android
 Boost for android is a set of tools to compile the main part of the [Boost C++ Libraries](http://www.boost.org/) for the Android platform.
 
